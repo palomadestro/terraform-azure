@@ -127,8 +127,8 @@ resource "azurerm_linux_virtual_machine" "vm-aulainfra" {
     azurerm_network_interface.nic-aulainfra.id
   ]
 
-  admin_username = "adminuser"
-  admin_password = "Password1234!"
+  admin_username = var.user
+  admin_password = var.password
   disable_password_authentication = false
 
   source_image_reference {
@@ -155,12 +155,20 @@ data "azurerm_public_ip" "ip-aulainfra-data" {
   
 }
 
+variable "user" {
+  description = "usário da máquina"
+  type = string
+}
+
+variable "password" {
+}
+
 resource "null_resource" "install-webserver" {
   connection {
     type = "ssh"
     host = data.azurerm_public_ip.ip-aulainfra-data.ip_address
-    user = "adminuser"
-    password = "Password1234!"
+    user = var.user
+    password = var.password
   
   }
 
@@ -175,4 +183,23 @@ resource "null_resource" "install-webserver" {
   depends_on = [
     azurerm_linux_virtual_machine.vm-aulainfra
   ]
-}
+} 
+
+resource "null_resource" "upload-app" {
+  connection {
+    type = "ssh"
+    host = data.azurerm_public_ip.ip-aulainfra-data.ip_address
+    user = var.user
+    password = var.password
+  }
+
+  provisioner "file" {
+    source = "app"
+    destination = "/home/adminuser"
+  }
+
+
+  depends_on = [
+    azurerm_linux_virtual_machine.vm-aulainfra
+  ]
+} 
